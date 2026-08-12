@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>刺青排程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --card:#FFFFFF;
+    --ink:#1E1E1C;
+    --ink-soft:#8B8A84;
+    --ink-faint:#B7B5AC;
+    --brand:#2E7D52;
+    --brand-tint:rgba(46,125,82,.09);
+    --purple:#6C4FA1;
+    --purple-tint:rgba(108,79,161,.09);
+    --yellow:#B8860B;
+    --yellow-tint:rgba(184,134,11,.12);
+    --red:#C1443B;
+    --red-tint:rgba(193,68,59,.10);
+    --line:#ECEAE4;
+    --shadow:rgba(30,30,28,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0; background:var(--bg);}
+  html{min-height:100%;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif;
+    min-height:100vh; min-height:100dvh; display:flex; justify-content:center;
+  }
+  #app{width:100%; max-width:520px; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+
+  header.topbar{padding:22px 20px 14px;}
+  .topbar-row{display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--brand); flex:none;}
+  .brand h1{font-size:20px; font-weight:800; margin:0; letter-spacing:.2px;}
+  .subtitle{font-size:12.5px; color:var(--ink-soft); margin-top:3px; margin-left:20px; display:flex; align-items:center; gap:8px;}
+  .subtitle button{
+    font-size:11.5px; color:var(--brand); background:none; border:none; padding:0;
+    text-decoration:underline; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .header-actions{display:flex; gap:8px;}
+  .header-actions button,.header-actions label{
+    width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--card);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .header-actions svg{width:16px;height:16px; stroke:var(--brand); fill:none; stroke-width:1.8;}
+
+  main{flex:1; padding:8px 16px 104px; overflow-y:auto;}
+
+  .section-title{
+    font-size:13px; font-weight:700; color:var(--ink-soft);
+    margin:22px 2px 10px; display:flex; align-items:center; gap:8px;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .section-title:first-child{margin-top:6px;}
+  .section-title .cnt{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    background:var(--line); color:var(--ink-soft); padding:1px 7px; border-radius:9px;
+  }
+  .section-title.warn-title{color:var(--red);}
+  .section-title.warn-title .cnt{background:var(--red-tint); color:var(--red);}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 15px; margin-bottom:10px; box-shadow:0 1px 2px var(--shadow);
+  }
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .c-name{font-size:16px; font-weight:700; line-height:1.3;}
+  .c-design{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+  .c-price{text-align:right; flex:none;}
+  .p-main{font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;}
+  .p-sub{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft); margin-top:2px;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .chip{font-size:12px; font-weight:600; padding:4px 9px; border-radius:7px; display:inline-flex; align-items:center; gap:5px;}
+  .chip.c-purple{background:var(--purple-tint); color:var(--purple);}
+  .chip.c-yellow{background:var(--yellow-tint); color:var(--yellow);}
+  .chip.c-red{background:var(--red-tint); color:var(--red);}
+
+  .badges{margin-top:9px; display:flex; flex-wrap:wrap; gap:6px;}
+  .badge{font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:10px; letter-spacing:.2px;}
+  .badge-deadline-urgent{background:var(--purple); color:#fff;}
+  .badge-deadline-soon{background:var(--purple-tint); color:var(--purple);}
+  .badge-appt-urgent{background:var(--yellow); color:#fff;}
+  .badge-appt-soon{background:var(--yellow-tint); color:var(--yellow);}
+  .badge-pending{background:var(--red-tint); color:var(--red); border:1px solid var(--red);}
+  .badge-done{background:var(--line); color:var(--ink-faint);}
+
+  .c-note{margin-top:9px; font-size:12.5px; color:var(--ink-soft); line-height:1.5;}
+
+  .card-actions{margin-top:11px; display:flex; gap:16px; border-top:1px solid var(--line); padding-top:9px;}
+  .card-actions button{font-size:12.5px; font-weight:700; background:none; border:none; color:var(--brand); cursor:pointer; padding:2px 0;}
+  .card-actions button.del{color:var(--red);}
+  .confirm-row{margin-top:11px; display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--red); border-top:1px solid var(--line); padding-top:9px;}
+  .confirm-row button{font-size:12px; font-weight:700; border:1px solid currentColor; background:none; padding:5px 11px; border-radius:7px; cursor:pointer;}
+
+  .empty{text-align:center; padding:46px 20px; color:var(--ink-soft);}
+  .empty .dot2{width:12px;height:12px;border-radius:50%;background:var(--line); margin:0 auto 14px;}
+  .empty p{font-size:13.5px; line-height:1.8; margin:0;}
+  .empty b{color:var(--ink); display:block; margin-bottom:4px; font-size:14.5px;}
+
+  .month-head{font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:600; letter-spacing:1.5px; color:var(--ink-faint); margin:22px 2px 8px; text-transform:uppercase;}
+  .month-head:first-child{margin-top:4px;}
+
+  .cal-nav{display:flex; align-items:center; justify-content:space-between; margin:6px 0 14px;}
+  .cal-nav button{background:var(--card); border:1px solid var(--line); width:34px; height:34px; border-radius:9px; font-size:16px; color:var(--brand); cursor:pointer;}
+  .cal-title{font-size:15.5px; font-weight:700;}
+  .cal-legend{display:flex; gap:14px; font-size:11.5px; color:var(--ink-soft); margin-bottom:12px; flex-wrap:wrap;}
+  .cal-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .cal-legend i{width:7px;height:7px;border-radius:50%; display:inline-block;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:8px;}
+  .cal-wd{text-align:center; font-size:11px; color:var(--ink-faint); font-weight:600; padding-bottom:2px;}
+  .cal-cell{aspect-ratio:1; background:var(--card); border:1px solid var(--line); border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; font-size:13px; color:var(--ink);}
+  .cal-cell.empty-cell{background:transparent; border:none; cursor:default;}
+  .cal-cell.today{border-color:var(--brand); border-width:2px; font-weight:700;}
+  .cal-cell.selected{background:var(--brand); color:#fff; border-color:var(--brand);}
+  .cal-cell .marks{display:flex; gap:3px; height:6px;}
+  .cal-cell .marks span{width:5px;height:5px;border-radius:50%;}
+  .cal-detail-head{font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:18px 2px 8px;}
+
+  .income-hero{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 18px; margin-bottom:16px; display:flex; gap:14px;}
+  .income-block{flex:1;}
+  .income-label{font-size:11.5px; color:var(--ink-soft); font-weight:600;}
+  .income-amount{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; margin-top:5px;}
+  .income-amount.brand{color:var(--brand);}
+  .income-divider{width:1px; background:var(--line);}
+  .income-sub{font-size:11.5px; color:var(--ink-faint); margin-top:16px;}
+  .income-item{display:flex; justify-content:space-between; align-items:center; padding:12px 2px; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .income-item:last-child{border-bottom:none;}
+  .income-item .n{font-weight:600;}
+  .income-item .d{font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-top:2px;}
+  .income-item .p{font-family:'JetBrains Mono',monospace; font-weight:700; text-align:right;}
+  .income-item .p .sub{display:block; font-size:10.5px; color:var(--red); font-weight:600; margin-top:2px;}
+
+  .form-title{font-size:19px; font-weight:800; margin:6px 2px 20px;}
+  label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:7px;}
+  .field{margin-bottom:16px;}
+  input[type=text],input[type=date],input[type=number],textarea{
+    width:100%; background:var(--card); border:1.5px solid var(--line); border-radius:10px;
+    padding:13px 14px; font-size:16px; font-family:'Inter',sans-serif; color:var(--ink);
+  }
+  input:focus,textarea:focus{outline:none; border-color:var(--brand);}
+  textarea{resize:vertical; min-height:64px; font-size:15px;}
+  .row2{display:flex; gap:12px;}
+  .row2 > div{flex:1;}
+  .seg{display:flex; gap:8px;}
+  .seg button{flex:1; padding:13px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); font-size:15px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--ink-soft); cursor:pointer;}
+  .seg button.active{border-color:var(--brand); background:var(--brand-tint); color:var(--brand);}
+  .preview-box{background:var(--purple-tint); color:var(--purple); border-radius:10px; padding:11px 14px; font-size:13.5px; margin-bottom:16px; font-weight:600;}
+  .balance-box{background:var(--bg); border:1px dashed var(--line); border-radius:10px; padding:11px 14px; font-size:13px; color:var(--ink-soft); margin-bottom:16px;}
+  .balance-box b{color:var(--ink); font-family:'JetBrains Mono',monospace;}
+  .err{color:var(--red); font-size:12.5px; margin-top:6px; margin-bottom:10px;}
+  .btn-primary{width:100%; background:var(--brand); color:#fff; border:none; padding:15px; font-size:15.5px; font-weight:700; border-radius:11px; cursor:pointer;}
+  .btn-delete{width:100%; background:none; color:var(--red); border:1.5px solid var(--red); padding:13px; font-size:14.5px; font-weight:600; border-radius:11px; cursor:pointer; margin-top:22px;}
+
+  nav.bottom-nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:520px; background:var(--card); border-top:1px solid var(--line); display:flex; padding:8px 4px calc(8px + env(safe-area-inset-bottom)); z-index:10;}
+  nav.bottom-nav button{flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 2px; cursor:pointer; color:var(--ink-faint);}
+  nav.bottom-nav button.active{color:var(--brand);}
+  nav.bottom-nav button .icon svg{width:19px;height:19px; stroke:currentColor; fill:none; stroke-width:1.7;}
+  nav.bottom-nav button .lbl{font-size:10.5px; font-weight:600;}
+
+  #toast{position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-40px); background:var(--ink); color:#fff; padding:9px 18px; border-radius:20px; font-size:13px; opacity:0; transition:all .25s ease; z-index:50; pointer-events:none;}
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .loading{padding:70px 20px; text-align:center; color:var(--ink-faint); font-size:13.5px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand"><span class="dot"></span><h1>刺青排程</h1></div>
+      <div class="header-actions">
+        <button id="export-btn" title="匯出備份(CSV)"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button>
+        <label for="import-file" title="還原備份(CSV)"><svg viewBox="0 0 24 24"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg></label>
+        <input type="file" id="import-file" accept=".csv" style="display:none">
+      </div>
+    </div>
+    <div class="subtitle" id="storage-diag">行事曆與收入管理　·　可匯出CSV備份</div>
+  </header>
+  <main id="main"></main>
+  <nav class="bottom-nav" id="nav">
+    <button data-tab="today"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><span class="lbl">今日</span></button>
+    <button data-tab="list"><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span class="lbl">預約</span></button>
+    <button data-tab="calendar"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="lbl">日曆</span></button>
+    <button data-tab="income"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2 3-2s3 .8 3 2-1.3 1.5-3 2-3 .8-3 2 1.3 2 3 2 3-.6 3-2"/></svg></span><span class="lbl">收入</span></button>
+    <button data-tab="add"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="lbl">新增</span></button>
+  </nav>
+</div>
+<div id="toast"></div>
+
+<script>
+const WD = ['日','一','二','三','四','五','六'];
+
+/* ====== 設定區：部署 Google Apps Script 之後，把下面兩個值換成妳自己的 ====== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxmI6XqQW9uRDNqSZKxcDDI77Oo8IXkaLRWW7uM0-OL3soJLOQQQzkAEZ7ksf1IHvlB/exec';
+const API_TOKEN = '0211';
+/* ======================================================================= */
+
+const state = {
+  bookings: [], loaded: false, tab: 'today',
+  calMonth: startOfMonth(new Date()), calSelected: null,
+  incMonth: startOfMonth(new Date()),
+  editingId: null, confirmDeleteId: null, pendingImport: null
+};
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function pad(n){ return n.toString().padStart(2,'0'); }
+function parseISO(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function toISO(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function today0(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function diffDays(a,b){ return Math.round((a-b)/86400000); }
+function fmtDisp(d){ return `${d.getMonth()+1}/${d.getDate()} (${WD[d.getDay()]})`; }
+function fmtMoney(n){ return 'NT$ ' + Number(n||0).toLocaleString('zh-TW'); }
+function deadlineDate(b){ return addDays(parseISO(b.apptDate), -b.deadlineDays); }
+function hasTotal(b){ return b.total !== null && b.total !== undefined && b.total !== ''; }
+function isPending(b){ const t=today0(); return diffDays(parseISO(b.apptDate), t) < 0 && !hasTotal(b); }
+
+/* ---------------- CSV backup ---------------- */
+const CSV_HEADERS = ['id','clientName','design','discussDate','apptDate','deadlineDays','rate','deposit','total','note','createdAt'];
+function csvEscape(v){
+  v = (v===null||v===undefined) ? '' : String(v);
+  if(/[",\n]/.test(v)) v = '"' + v.replace(/"/g,'""') + '"';
+  return v;
+}
+function toCSV(bookings){
+  const lines = [CSV_HEADERS.join(',')];
+  bookings.forEach(b=> lines.push(CSV_HEADERS.map(h=> csvEscape(b[h])).join(',')));
+  return lines.join('\r\n');
+}
+function parseCSVRows(text){
+  const rows = []; let cur=''; let row=[]; let inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQ){
+      if(c === '"'){ if(text[i+1] === '"'){ cur+='"'; i++; } else inQ=false; }
+      else cur += c;
+    }else{
+      if(c === '"') inQ = true;
+      else if(c === ','){ row.push(cur); cur=''; }
+      else if(c === '\n' || c === '\r'){
+        if(c === '\r' && text[i+1]==='\n') i++;
+        row.push(cur); cur=''; rows.push(row); row=[];
+      } else cur += c;
+    }
+  }
+  if(cur!=='' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r=> !(r.length===1 && r[0]===''));
+}
+function fromCSV(text){
+  const rows = parseCSVRows(text);
+  if(rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map(r=>{
+    const obj = {};
+    headers.forEach((h,idx)=> obj[h] = r[idx]!==undefined ? r[idx] : '');
+    obj.deadlineDays = Number(obj.deadlineDays)||4;
+    obj.rate = Number(obj.rate)||5000;
+    obj.deposit = Number(obj.deposit)||0;
+    obj.total = (obj.total===''||obj.total===undefined) ? null : Number(obj.total);
+    if(!obj.id) obj.id = uid();
+    if(!obj.createdAt) obj.createdAt = new Date().toISOString();
+    return obj;
+  });
+}
+function exportCSV(){
+  const csv = toCSV(state.bookings);
+  const blob = new Blob(["\uFEFF" + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url; a.download = `刺青排程備份_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('已下載備份檔');
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+function apiConfigured_(){
+  return API_URL && !API_URL.startsWith('請貼上') && API_TOKEN && !API_TOKEN.startsWith('請貼上');
+}
+
+/* 從 Google Sheets（透過 Apps Script API）讀取全部預約資料。
+   失敗時不清空畫面上既有資料，避免看起來像遺失。 */
+async function loadData(){
+  state.loaded = false; render();
+  if(!apiConfigured_()){
+    toast('⚠️ 尚未設定API網址／密鑰，請先完成部署步驟');
+    state.bookings = [];
+    state.loaded = true; render();
+    return;
+  }
+  try{
+    const url = `${API_URL}?token=${encodeURIComponent(API_TOKEN)}&action=get`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || '讀取失敗');
+    state.bookings = data.bookings || [];
+  }catch(e){
+    toast('讀取資料失敗：' + (e && e.message ? e.message : '未知錯誤'));
+    state.bookings = state.bookings || [];
+  }
+  state.loaded = true; render();
+}
+
+/* 把整批資料寫回 Google Sheets（整批取代）。
+   POST body 用純文字送出（不指定Content-Type），避免觸發CORS preflight，
+   Apps Script部署為Web App時對這種請求相容性最好。 */
+async function saveData(){
+  if(!apiConfigured_()){
+    toast('❌ 尚未設定API網址／密鑰');
+    return false;
+  }
+  const payload = JSON.stringify({ token: API_TOKEN, bookings: state.bookings });
+  for(let attempt=1; attempt<=3; attempt++){
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: payload });
+      const data = await res.json();
+      if(data.ok) return true;
+      if(attempt===3){
+        toast('儲存失敗：' + (data.error || '未知錯誤') + '（請用右上角匯出CSV備份）');
+        return false;
+      }
+    }catch(e){
+      if(attempt===3){
+        toast('儲存失敗：' + (e && e.message ? e.message : '網路錯誤') + '（請用右上角匯出CSV備份）');
+        return false;
+      }
+    }
+    await sleep(350 * attempt);
+  }
+  return false;
+}
+
+function setTab(tab){ state.tab = tab; state.editingId = null; state.confirmDeleteId = null; render(); }
+
+function render(){
+  document.querySelectorAll('#nav button').forEach(b=> b.classList.toggle('active', b.dataset.tab===state.tab));
+  const main = document.getElementById('main');
+  if(!state.loaded){ main.innerHTML = '<div class="loading">載入中 …</div>'; return; }
+
+  let banner = '';
+  if(state.pendingImport){
+    banner += `<div style="background:var(--brand-tint); border:1px solid var(--brand); color:var(--brand);
+      border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; line-height:1.6;">
+      讀到備份檔，共 <b>${state.pendingImport.length}</b> 筆資料。確定要用它「取代」目前所有紀錄嗎？
+      <div style="display:flex; gap:10px; margin-top:9px;">
+        <button id="import-confirm" style="font-weight:700; background:var(--brand); color:#fff; border:none; padding:7px 14px; border-radius:7px; cursor:pointer;">確定取代</button>
+        <button id="import-cancel" style="font-weight:700; background:none; color:var(--brand); border:1px solid var(--brand); padding:7px 14px; border-radius:7px; cursor:pointer;">取消</button>
+      </div>
+    </div>`;
+  }
+
+  if(state.tab==='today') main.innerHTML = banner + renderToday();
+  else if(state.tab==='list') main.innerHTML = banner + renderList();
+  else if(state.tab==='calendar') main.innerHTML = banner + renderCalendar();
+  else if(state.tab==='income') main.innerHTML = banner + renderIncome();
+  else if(state.tab==='add') main.innerHTML = banner + renderForm();
+  attachHandlers();
+}
+
+/* ---------------- TODAY ---------------- */
+function renderToday(){
+  const t = today0();
+  const deadlines = state.bookings.map(b=>({b, dd: deadlineDate(b)})).filter(x=> diffDays(x.dd, t) <= 7).sort((a,c)=> a.dd - c.dd);
+  const appts = state.bookings.map(b=>({b, ad: parseISO(b.apptDate)})).filter(x=> diffDays(x.ad, t) >= 0 && diffDays(x.ad, t) <= 14).sort((a,c)=> a.ad - c.ad);
+  const pending = state.bookings.filter(isPending).sort((a,c)=> parseISO(a.apptDate)-parseISO(c.apptDate));
+
+  if(deadlines.length===0 && appts.length===0 && pending.length===0){
+    return emptyState('目前沒有近期待辦', '新增一筆預約後，交稿提醒跟施作日會自動出現在這裡。');
+  }
+  let html = '';
+  if(deadlines.length){
+    html += `<div class="section-title">即將交稿 <span class="cnt">${deadlines.length}</span></div>`;
+    deadlines.forEach(({b,dd})=>{
+      const dleft = diffDays(dd, t);
+      const badge = dleft < 0 ? `<span class="badge badge-deadline-urgent">已逾期 ${Math.abs(dleft)} 天</span>`
+                  : dleft === 0 ? `<span class="badge badge-deadline-urgent">今天要交稿</span>`
+                  : dleft <= 2 ? `<span class="badge badge-deadline-urgent">剩 ${dleft} 天</span>`
+                  : `<span class="badge badge-deadline-soon">剩 ${dleft} 天</span>`;
+      html += ticketCard(b, badge, [chip('purple', `交稿 ${fmtDisp(dd)}`)], false);
+    });
+  }
+  if(appts.length){
+    html += `<div class="section-title" style="margin-top:22px">即將施作 <span class="cnt">${appts.length}</span></div>`;
+    appts.forEach(({b,ad})=>{
+      const dleft = diffDays(ad, t);
+      const badge = dleft === 0 ? `<span class="badge badge-appt-urgent">今天施作</span>` : `<span class="badge badge-appt-soon">${dleft} 天後</span>`;
+      html += ticketCard(b, badge, [chip('yellow', `施作 ${fmtDisp(ad)}`)], false);
+    });
+  }
+  if(pending.length){
+    html += `<div class="section-title warn-title" style="margin-top:22px">待補總金額 <span class="cnt">${pending.length}</span></div>`;
+    pending.forEach(b=>{
+      html += ticketCard(b, `<span class="badge badge-pending">還沒填總金額</span>`, [chip('red', `施作日已過 ${fmtDisp(parseISO(b.apptDate))}`)], true);
+    });
+  }
+  return html;
+}
+
+/* ---------------- LIST ---------------- */
+function renderList(){
+  if(state.bookings.length===0) return emptyState('尚無預約紀錄', '點擊下方「新增」建立第一筆客人預約。');
+  const sorted = [...state.bookings].sort((a,c)=> parseISO(a.apptDate)-parseISO(c.apptDate));
+  let html = ''; let curMonth = ''; const t = today0();
+  sorted.forEach(b=>{
+    const ad = parseISO(b.apptDate);
+    const label = `${ad.getFullYear()}年 ${ad.getMonth()+1}月`;
+    if(label !== curMonth){ html += `<div class="month-head">${label}</div>`; curMonth = label; }
+    const dd = deadlineDate(b);
+    const past = diffDays(ad,t) < 0;
+    let badge = '';
+    if(isPending(b)) badge = `<span class="badge badge-pending">待補總金額</span>`;
+    else if(past) badge = `<span class="badge badge-done">已完成</span>`;
+    const chips = [chip('purple', `交稿 ${fmtDisp(dd)}`), chip('yellow', `施作 ${fmtDisp(ad)}`)];
+    if(b.discussDate) chips.unshift(chip('red', `討論 ${fmtDisp(parseISO(b.discussDate))}`));
+    html += ticketCard(b, badge, chips, true);
+  });
+  return html;
+}
+
+function chip(type, text){ return `<span class="chip c-${type}">${text}</span>`; }
+
+function ticketCard(b, badgeHtml, chipsArr, withActions){
+  const confirming = state.confirmDeleteId === b.id;
+  const priceMain = hasTotal(b) ? fmtMoney(b.total) : fmtMoney(b.deposit);
+  const priceSub = hasTotal(b) ? `尾款 ${fmtMoney(b.total - b.deposit)}` : `訂金（時薪 ${b.rate}）`;
+  return `
+  <div class="card">
+    <div class="card-top">
+      <div>
+        <div class="c-name">${escapeHtml(b.clientName)}</div>
+        ${b.design ? `<div class="c-design">${escapeHtml(b.design)}</div>` : ''}
+      </div>
+      <div class="c-price">
+        <div class="p-main">${priceMain}</div>
+        <div class="p-sub">${priceSub}</div>
+      </div>
+    </div>
+    <div class="chips">${chipsArr.join('')}</div>
+    ${badgeHtml ? `<div class="badges">${badgeHtml}</div>` : ''}
+    ${b.note ? `<div class="c-note">${escapeHtml(b.note)}</div>` : ''}
+    ${withActions ? (
+      confirming
+      ? `<div class="confirm-row">確定刪除這筆？
+           <button data-act="del-yes" data-id="${b.id}">刪除</button>
+           <button data-act="del-no" data-id="${b.id}">取消</button>
+         </div>`
+      : `<div class="card-actions">
+           <button data-act="edit" data-id="${b.id}">✎ 編輯</button>
+           <button data-act="del" data-id="${b.id}" class="del">✕ 刪除</button>
+         </div>`
+    ) : ''}
+  </div>`;
+}
+
+function emptyState(title, sub){ return `<div class="empty"><div class="dot2"></div><p><b>${title}</b>${sub}</p></div>`; }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------------- CALENDAR ---------------- */
+function renderCalendar(){
+  const m = state.calMonth; const year = m.getFullYear(), month = m.getMonth();
+  const first = new Date(year, month, 1); const startOffset = first.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const t = today0(); const sel = state.calSelected || t;
+
+  const byDay = {};
+  state.bookings.forEach(b=>{
+    const ad = toISO(parseISO(b.apptDate)); const dd = toISO(deadlineDate(b));
+    (byDay[ad] = byDay[ad]||{a:0,d:0,disc:0}).a++;
+    (byDay[dd] = byDay[dd]||{a:0,d:0,disc:0}).d++;
+    if(b.discussDate){ const disc = toISO(parseISO(b.discussDate)); (byDay[disc] = byDay[disc]||{a:0,d:0,disc:0}).disc++; }
+  });
+
+  let cells = '';
+  for(let i=0;i<startOffset;i++) cells += `<div class="cal-cell empty-cell"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(year,month,day); const iso = toISO(d);
+    const marks = byDay[iso];
+    const isToday = sameDay(d,t);
+    const isSel = sameDay(d,sel);
+    cells += `<div class="cal-cell ${isToday?'today':''} ${isSel?'selected':''}" data-act="pick-day" data-date="${iso}">
+      <span>${day}</span>
+      <span class="marks">
+        ${marks && marks.disc ? '<span style="background:var(--red)"></span>' : ''}
+        ${marks && marks.d ? '<span style="background:var(--purple)"></span>' : ''}
+        ${marks && marks.a ? '<span style="background:var(--yellow)"></span>' : ''}
+      </span>
+    </div>`;
+  }
+
+  const selISO = toISO(sel);
+  const dayItems = state.bookings.filter(b=> b.apptDate===selISO || toISO(deadlineDate(b))===selISO || b.discussDate===selISO);
+  let detail = `<div class="cal-detail-head">${fmtDisp(sel)} 的項目</div>`;
+  if(dayItems.length===0){
+    detail += `<div class="empty" style="padding:26px 10px"><p style="font-size:13px">這天沒有安排。</p></div>`;
+  }else{
+    dayItems.forEach(b=>{
+      const chips = [];
+      if(b.discussDate===selISO) chips.push(chip('red','討論日'));
+      if(b.apptDate===selISO) chips.push(chip('yellow','施作日'));
+      if(toISO(deadlineDate(b))===selISO) chips.push(chip('purple','交稿日'));
+      detail += ticketCard(b, '', chips, false);
+    });
+  }
+
+  return `
+  <div class="cal-nav">
+    <button data-act="cal-prev">‹</button>
+    <div class="cal-title">${year}年 ${month+1}月</div>
+    <button data-act="cal-next">›</button>
+  </div>
+  <div class="cal-legend">
+    <span><i style="background:var(--red)"></i>討論日</span>
+    <span><i style="background:var(--purple)"></i>交稿日</span>
+    <span><i style="background:var(--yellow)"></i>施作日</span>
+  </div>
+  <div class="cal-grid">
+    ${WD.map(w=>`<div class="cal-wd">${w}</div>`).join('')}
+    ${cells}
+  </div>
+  ${detail}`;
+}
+
+/* ---------------- INCOME ---------------- */
+function renderIncome(){
+  const m = state.incMonth;
+  const inMonth = state.bookings.filter(b=>{
+    const ad = parseISO(b.apptDate);
+    return ad.getFullYear()===m.getFullYear() && ad.getMonth()===m.getMonth();
+  }).sort((a,c)=> parseISO(a.apptDate)-parseISO(c.apptDate));
+
+  const depositTotal = inMonth.reduce((s,b)=> s+Number(b.deposit||0), 0);
+  const completedTotal = inMonth.filter(hasTotal).reduce((s,b)=> s+Number(b.total), 0);
+  const pendingCount = inMonth.filter(isPending).length;
+
+  let items = '';
+  if(inMonth.length===0){
+    items = `<div class="empty" style="padding:26px 10px"><p style="font-size:13px">這個月還沒有預約紀錄。</p></div>`;
+  }else{
+    inMonth.forEach(b=>{
+      const ad = parseISO(b.apptDate);
+      const priceHtml = hasTotal(b) ? fmtMoney(b.total) : `${fmtMoney(b.deposit)}<span class="sub">待補總額</span>`;
+      items += `<div class="income-item">
+        <div><div class="n">${escapeHtml(b.clientName)}</div><div class="d">施作 ${fmtDisp(ad)}</div></div>
+        <div class="p">${priceHtml}</div>
+      </div>`;
+    });
+  }
+
+  return `
+  <div class="cal-nav">
+    <button data-act="inc-prev">‹</button>
+    <div class="cal-title">${m.getFullYear()}年 ${m.getMonth()+1}月</div>
+    <button data-act="inc-next">›</button>
+  </div>
+  <div class="income-hero">
+    <div class="income-block">
+      <div class="income-label">已收訂金</div>
+      <div class="income-amount">${fmtMoney(depositTotal)}</div>
+      <div class="income-sub">共 ${inMonth.length} 組</div>
+    </div>
+    <div class="income-divider"></div>
+    <div class="income-block">
+      <div class="income-label">已完成總額</div>
+      <div class="income-amount brand">${fmtMoney(completedTotal)}</div>
+      <div class="income-sub">${pendingCount>0 ? `${pendingCount} 組待補金額` : '全部已結'}</div>
+    </div>
+  </div>
+  <div class="section-title">明細</div>
+  ${items}`;
+}
+
+/* ---------------- FORM ---------------- */
+function renderForm(){
+  const editing = state.editingId ? state.bookings.find(b=>b.id===state.editingId) : null;
+  const v = editing || { clientName:'', design:'', discussDate:'', apptDate:'', deadlineDays:4, rate:5000, deposit:'', total:'', note:'' };
+  return `
+  <div class="form-title">${editing ? '編輯預約' : '新增預約'}</div>
+  <form id="booking-form">
+    <div class="field">
+      <label>客人姓名</label>
+      <input type="text" name="clientName" value="${escapeHtml(v.clientName)}" placeholder="例：小美" required>
+    </div>
+    <div class="field">
+      <label>圖案主題（選填）</label>
+      <input type="text" name="design" value="${escapeHtml(v.design||'')}" placeholder="例：龍紋、手臂內側">
+    </div>
+    <div class="field">
+      <label>討論日（選填）</label>
+      <input type="date" name="discussDate" value="${v.discussDate||''}">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>施作日期</label>
+        <input type="date" name="apptDate" value="${v.apptDate}" required>
+      </div>
+      <div class="field">
+        <label>提早幾天交稿</label>
+        <input type="number" inputmode="numeric" name="deadlineDays" value="${v.deadlineDays}" min="0" max="30" required>
+      </div>
+    </div>
+    <div id="deadline-preview" class="preview-box">選好日期後，這裡會自動顯示交稿日</div>
+
+    <div class="field">
+      <label>時薪</label>
+      <div class="seg" id="rate-seg">
+        <button type="button" data-rate="4000" class="${Number(v.rate)===4000?'active':''}">$4,000</button>
+        <button type="button" data-rate="5000" class="${Number(v.rate)===5000?'active':''}">$5,000</button>
+      </div>
+      <input type="hidden" name="rate" value="${v.rate}">
+    </div>
+    <div class="field">
+      <label>訂金（NT$）</label>
+      <input type="number" inputmode="numeric" name="deposit" value="${v.deposit}" min="0" placeholder="例：4000">
+    </div>
+    <div class="field">
+      <label>總金額（NT$，施作完成後再填）</label>
+      <input type="number" inputmode="numeric" name="total" value="${v.total===null||v.total===undefined?'':v.total}" min="0" placeholder="還沒完成可先留空">
+    </div>
+    <div id="balance-preview" class="balance-box">填了總金額後，這裡會自動算出尾款</div>
+
+    <div class="field">
+      <label>備註（選填）</label>
+      <textarea name="note" placeholder="例：手臂內側、彩色">${escapeHtml(v.note||'')}</textarea>
+    </div>
+    <div id="form-err" class="err" style="display:none"></div>
+    <button type="submit" class="btn-primary">${editing ? '儲存變更' : '儲存預約'}</button>
+    ${editing ? `<button type="button" class="btn-delete" data-act="form-del" data-id="${editing.id}">刪除這筆預約</button>` : ''}
+  </form>`;
+}
+
+function updateDeadlinePreview(){
+  const form = document.getElementById('booking-form'); if(!form) return;
+  const apptVal = form.apptDate.value; const days = Number(form.deadlineDays.value)||0;
+  const box = document.getElementById('deadline-preview');
+  box.textContent = apptVal ? `交稿日期：${fmtDisp(addDays(parseISO(apptVal), -days))}` : '選好日期後，這裡會自動顯示交稿日';
+}
+function updateBalancePreview(){
+  const form = document.getElementById('booking-form'); if(!form) return;
+  const deposit = Number(form.deposit.value)||0; const total = form.total.value;
+  const box = document.getElementById('balance-preview');
+  if(total===''){ box.textContent = '填了總金額後，這裡會自動算出尾款'; return; }
+  const balance = Number(total) - deposit;
+  box.innerHTML = `尾款：<b>${fmtMoney(balance)}</b>（總金額 ${fmtMoney(total)} − 訂金 ${fmtMoney(deposit)}）`;
+}
+
+/* ---------------- handlers ---------------- */
+function attachHandlers(){
+  const main = document.getElementById('main');
+
+  const impConfirm = document.getElementById('import-confirm');
+  const impCancel = document.getElementById('import-cancel');
+  if(impConfirm) impConfirm.onclick = async ()=>{
+    state.bookings = state.pendingImport; state.pendingImport = null;
+    const ok = await saveData();
+    toast(ok ? '已還原備份' : '還原失敗，請重試');
+    render();
+  };
+  if(impCancel) impCancel.onclick = ()=>{ state.pendingImport = null; render(); };
+
+  main.querySelectorAll('[data-act="edit"]').forEach(el=>{ el.onclick = ()=>{ state.editingId = el.dataset.id; state.tab='add'; render(); }; });
+  main.querySelectorAll('[data-act="del"]').forEach(el=>{ el.onclick = ()=>{ state.confirmDeleteId = el.dataset.id; render(); }; });
+  main.querySelectorAll('[data-act="del-no"]').forEach(el=>{ el.onclick = ()=>{ state.confirmDeleteId = null; render(); }; });
+  main.querySelectorAll('[data-act="del-yes"]').forEach(el=>{
+    el.onclick = async ()=>{
+      const backup = state.bookings;
+      state.bookings = state.bookings.filter(b=>b.id!==el.dataset.id);
+      state.confirmDeleteId = null;
+      const ok = await saveData();
+      if(!ok){ state.bookings = backup; toast('刪除失敗，請重試'); } else toast('已刪除');
+      render();
+    };
+  });
+
+  const calPrev = main.querySelector('[data-act="cal-prev"]');
+  const calNext = main.querySelector('[data-act="cal-next"]');
+  if(calPrev) calPrev.onclick = ()=>{ state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()-1, 1); render(); };
+  if(calNext) calNext.onclick = ()=>{ state.calMonth = new Date(state.calMonth.getFullYear(), state.calMonth.getMonth()+1, 1); render(); };
+  main.querySelectorAll('[data-act="pick-day"]').forEach(el=>{ el.onclick = ()=>{ state.calSelected = parseISO(el.dataset.date); render(); }; });
+
+  const incPrev = main.querySelector('[data-act="inc-prev"]');
+  const incNext = main.querySelector('[data-act="inc-next"]');
+  if(incPrev) incPrev.onclick = ()=>{ state.incMonth = new Date(state.incMonth.getFullYear(), state.incMonth.getMonth()-1, 1); render(); };
+  if(incNext) incNext.onclick = ()=>{ state.incMonth = new Date(state.incMonth.getFullYear(), state.incMonth.getMonth()+1, 1); render(); };
+
+  const form = document.getElementById('booking-form');
+  if(form){
+    form.apptDate.addEventListener('input', updateDeadlinePreview);
+    form.deadlineDays.addEventListener('input', updateDeadlinePreview);
+    form.deposit.addEventListener('input', updateBalancePreview);
+    form.total.addEventListener('input', updateBalancePreview);
+    updateDeadlinePreview(); updateBalancePreview();
+
+    form.querySelectorAll('#rate-seg button').forEach(btn=>{
+      btn.onclick = ()=>{
+        form.querySelectorAll('#rate-seg button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); form.rate.value = btn.dataset.rate;
+      };
+    });
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(form);
+      const clientName = fd.get('clientName').trim();
+      const design = fd.get('design').trim();
+      const discussDate = fd.get('discussDate');
+      const apptDate = fd.get('apptDate');
+      const deadlineDays = Number(fd.get('deadlineDays'));
+      const rate = Number(fd.get('rate'));
+      const deposit = Number(fd.get('deposit'))||0;
+      const totalRaw = fd.get('total');
+      const total = totalRaw === '' ? null : Number(totalRaw);
+      const note = fd.get('note').trim();
+      const errBox = document.getElementById('form-err');
+      if(!clientName || !apptDate){
+        errBox.textContent = '請確認姓名跟施作日期都已填寫';
+        errBox.style.display = 'block'; return;
+      }
+      errBox.style.display = 'none';
+      if(state.editingId){
+        const b = state.bookings.find(x=>x.id===state.editingId);
+        Object.assign(b, {clientName, design, discussDate, apptDate, deadlineDays, rate, deposit, total, note});
+      }else{
+        state.bookings.push({id: uid(), clientName, design, discussDate, apptDate, deadlineDays, rate, deposit, total, note, createdAt: new Date().toISOString()});
+      }
+      const ok = await saveData();
+      if(ok){
+        toast('已儲存');
+        state.editingId = null; state.tab = 'list'; render();
+      }else{
+        // 儲存失敗：資料仍留在畫面上（不切頁、不清空表單），
+        // 並提醒使用者立刻手動匯出CSV，避免關閉後遺失。
+        errBox.textContent = '⚠️ 儲存到雲端失敗，這筆資料目前只存在畫面上。請先點右上角「匯出備份」把CSV存下來，之後再重新整理頁面。';
+        errBox.style.display = 'block';
+      }
+    });
+  }
+
+  const delBtn = main.querySelector('[data-act="form-del"]');
+  if(delBtn){
+    delBtn.onclick = ()=>{
+      delBtn.textContent = '再按一次確認刪除';
+      delBtn.onclick = async ()=>{
+        state.bookings = state.bookings.filter(b=>b.id!==delBtn.dataset.id);
+        await saveData(); toast('已刪除');
+        state.editingId = null; state.tab = 'list'; render();
+      };
+    };
+  }
+}
+
+document.getElementById('nav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-tab]'); if(btn) setTab(btn.dataset.tab);
+});
+document.getElementById('export-btn').addEventListener('click', exportCSV);
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const parsed = fromCSV(ev.target.result);
+      if(parsed.length === 0){ toast('這個檔案沒有讀到有效資料'); return; }
+      state.pendingImport = parsed; render();
+    }catch(err){ toast('備份檔讀取失敗，請確認檔案格式'); }
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+});
+
+loadData();
+</script>
+</body>
+</html>
